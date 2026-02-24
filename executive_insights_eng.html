@@ -591,7 +591,7 @@
       const target = 536_234_473;
       let current = 0;
       const step = target / 50;
-      const fmt = (n) => 'Rp ' + Math.round(n / 1_000_000).toLocaleString('id-ID') + ' Jt';
+      const fmt = (n) => 'Rp ' + Math.round(n / 1_000_000).toLocaleString('id-ID') + ' M';
       const numEl = document.getElementById('netNumber');
       const interval = setInterval(() => {
         current = Math.min(current + step, target);
