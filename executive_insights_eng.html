@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Executive Summary — Credit Default Prediction Model</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf8f5;
+    --ink: #1a1714;
+    --ink-mid: #4a4540;
+    --ink-light: #9a948c;
+    --rule: #e4dfd8;
+    --blue: #1e4a8c;
+    --blue-pale: #e8eef7;
+    --red: #9c2a1e;
+    --red-pale: #f7ece9;
+    --amber: #8c5a0a;
+    --amber-pale: #fdf3e3;
+    --green: #1a5c36;
+    --green-pale: #e8f4ed;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── PAGE SHELL ── */
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 72px 60px 100px;
+  }
+  @media (max-width: 640px) { .page { padding: 40px 24px 80px; } }
+
+  /* ── HEADER ── */
+  .report-header {
+    border-top: 3px solid var(--ink);
+    padding-top: 28px;
+    margin-bottom: 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .report-tag {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 14px;
+  }
+  .report-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    max-width: 500px;
+  }
+  .report-title em {
+    font-style: italic;
+    color: var(--blue);
+  }
+  .report-meta {
+    text-align: right;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    line-height: 2.2;
+  }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 64px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .section-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--rule);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    flex-shrink: 0;
+  }
+  .section-info {}
+  .section-label {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 3px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  hr.rule { border: none; border-top: 1px solid var(--rule); margin-bottom: 32px; }
+
+  /* ── ASSUMPTION BOX ── */
+  .assumption-box {
+    background: var(--blue-pale);
+    border-left: 3px solid var(--blue);
+    padding: 16px 20px;
+    margin-bottom: 36px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .assumption-box span {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--blue);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .assumption-box p {
+    font-size: 11px;
+    color: var(--blue);
+    opacity: 0.8;
+    line-height: 1.7;
+  }
+  .assumption-box strong { opacity: 1; font-weight: 500; }
+
+  /* ── IMPACT ROWS ── */
+  .impact-list { display: flex; flex-direction: column; gap: 1px; }
+
+  .impact-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    align-items: start;
+    gap: 20px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--rule);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .impact-row.visible { opacity: 1; transform: translateX(0); }
+
+  .impact-icon {
+    font-size: 18px;
+    margin-top: 2px;
+    text-align: center;
+  }
+  .impact-body {}
+  .impact-title {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .impact-title.saved { color: var(--green); }
+  .impact-title.risk  { color: var(--red); }
+  .impact-title.opp   { color: var(--amber); }
+  .impact-narrative {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--ink-mid);
+    max-width: 520px;
+  }
+  .impact-narrative strong { color: var(--ink); font-weight: 700; }
+
+  .impact-amount {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .amount-label {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 4px;
+  }
+  .amount-value {
+    font-size: 1.3rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+  .amount-value.saved { color: var(--green); }
+  .amount-value.risk  { color: var(--red); }
+  .amount-value.opp   { color: var(--amber); }
+  .amount-count {
+    font-size: 9px;
+    color: var(--ink-light);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* ── NET VALUE ── */
+  .net-block {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 28px 28px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    margin-top: 2px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.6s ease 0.4s, transform 0.6s ease 0.4s;
+  }
+  .net-block.visible { opacity: 1; transform: translateY(0); }
+  .net-label-sm {
+    font-size: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(250,248,245,0.45);
+    margin-bottom: 6px;
+  }
+  .net-conclusion {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    font-style: italic;
+    line-height: 1.7;
+    color: rgba(250,248,245,0.75);
+    max-width: 420px;
+  }
+  .net-conclusion em { font-style: normal; color: var(--paper); font-weight: 700; }
+  .net-number-wrap { text-align: right; flex-shrink: 0; }
+  .net-number-label {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(250,248,245,0.4);
+    margin-bottom: 6px;
+  }
+  .net-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #7ecfa0;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+  .net-sub {
+    font-size: 9px;
+    color: rgba(250,248,245,0.35);
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* ── FEATURE IMPORTANCE CHART ── */
+  .chart-wrap {
+    position: relative;
+  }
+
+  .chart-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--amber-pale);
+    border: 1px solid #e8c87c;
+    padding: 8px 14px;
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 0.5px;
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+  .chart-note::before { content: '⚑'; font-size: 12px; flex-shrink: 0; }
+
+  .feat-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 64px;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .feat-row.visible { opacity: 1; transform: translateX(0); }
+
+  .feat-name {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-align: right;
+    color: var(--ink-mid);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .feat-name.top3 { color: var(--ink); font-weight: 500; }
+
+  .bar-track {
+    height: 20px;
+    background: var(--rule);
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  /* zero line at center or at left depending on positive/negative */
+  .bar-fill {
+    height: 100%;
+    position: absolute;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-fill.positive {
+    left: 50%;
+    background: var(--red);
+    opacity: 0.75;
+  }
+  .bar-fill.negative {
+    right: 50%;
+    background: var(--blue);
+    opacity: 0.75;
+  }
+  .bar-fill.top3.positive { opacity: 1; }
+  .bar-fill.top3.negative { opacity: 1; }
+  .zero-line {
+    position: absolute;
+    left: 50%;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--ink);
+    opacity: 0.2;
+  }
+
+  .feat-coef {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-align: left;
+  }
+  .feat-coef.positive { color: var(--red); }
+  .feat-coef.negative { color: var(--blue); }
+  .feat-coef.top3 { font-weight: 500; }
+
+  .chart-legend {
+    display: flex;
+    gap: 28px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 1px; }
+
+  /* ── FOOTER ── */
+  .report-footer {
+    margin-top: 80px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .report-footer p { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-light); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="report-header">
+    <div>
+      <div class="report-tag">Executive Summary · Credit Default Prediction Model</div>
+      <h1 class="report-title">Business Impact <em>Narrative</em><br>& Decision Drivers</h1>
+    </div>
+    <div class="report-meta">
+      Model: Logistic Regression<br>
+      Test Set: 1,992 customers<br>
+      Avg. Loan: Rp 17,949,277<br>
+      Interest Target: 12.5% / Rp 2,243,660
+    </div>
+  </header>
+
+  <!-- SECTION 1: BUSINESS NARRATIVE -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-info">
+        <div class="section-label">Impact Analysis</div>
+        <div class="section-title">The Management Language Narrative</div>
+      </div>
+    </div>
+    <hr class="rule">
+
+    <div class="assumption-box">
+      <span>Basis</span>
+      <p>Using actual values from the dataset: average loan amount <strong>Rp 17,949,277</strong> (<code>df['loan_amount'].mean() × 1000</code>), with an interest profit target of <strong>12.5% = Rp 2,243,660 per approved loan</strong>. Model uses <em>class_weight='balanced'</em> with probability threshold 0.56.</p>
+    </div>
+
+    <div class="impact-list" id="impactList">
+
+      <div class="impact-row" data-delay="0">
+        <div class="impact-icon">🛡</div>
+        <div class="impact-body">
+          <div class="impact-title saved">Capital Successfully Shielded · True Positive</div>
+          <p class="impact-narrative">
+            Our model correctly flagged <strong>89 high-risk applicants</strong> before disbursement. By rejecting them upfront, the model directly prevented a capital loss of <strong>Rp 1.597 Billion</strong>.
+          </p>
+        </div>
+        <div class="impact-amount">
+          <div class="amount-label">Protected</div>
+          <div class="amount-value saved">Rp 1,597 M</div>
+          <div class="amount-count">89 × Rp 17,949,277</div>
+        </div>
+      </div>
+
+      <div class="impact-row" data-delay="100">
+        <div class="impact-icon">⚠</div>
+        <div class="impact-body">
+          <div class="impact-title risk">Defaulters That Slipped Through · False Negative</div>
+          <p class="impact-narrative">
+            The model is not perfect. <strong>68 true defaulters</strong> were predicted as low-risk and had their loans disbursed. This represents active capital at risk that should be mitigated through ongoing monitoring and early-warning systems.
+          </p>
+        </div>
+        <div class="impact-amount">
+          <div class="amount-label">Active Risk</div>
+          <div class="amount-value risk">Rp 1,221 M</div>
+          <div class="amount-count">68 × Rp 17,949,277</div>
+        </div>
+      </div>
+
+      <div class="impact-row" data-delay="200">
+        <div class="impact-icon">📉</div>
+        <div class="impact-body">
+          <div class="impact-title opp">False Alarms · False Positive</div>
+          <p class="impact-narrative">
+            Because the model is calibrated to be conservative, <strong>473 creditworthy customers</strong> were also rejected. No capital loss here — but there is unrealised interest income of <strong>Rp 1.061 Billion</strong>.
+          </p>
+        </div>
+        <div class="impact-amount">
+          <div class="amount-label">Lost Opportunity</div>
+          <div class="amount-value opp">Rp 1,061 M</div>
+          <div class="amount-count">473 × Rp 2,243,660</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- NET BLOCK -->
+    <div class="net-block" id="netBlock">
+      <div>
+        <div class="net-label-sm">Executive Conclusion</div>
+        <p class="net-conclusion">
+          Even with the opportunity cost from false alarms,
+          the capital protected (<em>Rp 1.597 Billion</em>) outweighs
+          the revenue foregone (<em>Rp 1.061 Billion</em>) —
+          delivering a net positive outcome for the institution.
+        </p>
+      </div>
+      <div class="net-number-wrap">
+        <div class="net-number-label">Net Protected Value</div>
+        <div class="net-number" id="netNumber">Rp 0</div>
+        <div class="net-sub">Capital Saved − Lost Opportunity</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- SECTION 2: FEATURE IMPORTANCE -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-info">
+        <div class="section-label">Model Interpretation</div>
+        <div class="section-title">Decision Drivers — Feature Importance</div>
+      </div>
+    </div>
+    <hr class="rule">
+
+    <!-- <div class="chart-note">
+      Coefficients below are indicative, based on EDA signal analysis. Replace with actual values from <code>model_lr.coef_[0]</code> for full precision.
+    </div> -->
+
+    <div class="chart-wrap" id="chartWrap">
+      <!-- Features: sorted by abs(coef) descending -->
+      <!-- format: name, coef, is_top3 -->
+    </div>
+
+    <div class="chart-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--red);opacity:0.9"></div>
+        Positive — increases default risk
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--blue);opacity:0.9"></div>
+        Negative — decreases default risk
+      </div>
+    </div>
+  </section>
+
+  <footer class="report-footer">
+    <p>Logistic Regression · class_weight=balanced · threshold 0.56</p>
+    <p>Avg Loan: Rp 17,949,277 · Interest 12.5% = Rp 2,243,660 · Test Set: 1,992 records</p>
+  </footer>
+
+</div>
+
+<script>
+  // ── FEATURE DATA ──
+  // Replace coef values with model_lr.coef_[0] from your notebook
+  const features = [
+    { name: 'loan_amount',              coef:  0.8486, top3: true  },
+    { name: 'income',                   coef: -0.2530, top3: true  },
+    { name: 'credit_score',             coef: -0.1383, top3: true  },
+    { name: 'loan_term_months',         coef: -0.1349, top3: false },
+    { name: 'past_defaults',            coef:  0.1190, top3: false },
+    { name: 'age',                      coef: -0.0687, top3: false },
+    { name: 'loan_purpose (Other)',     coef: -0.0476, top3: false },
+    { name: 'employment_years',         coef: -0.0307, top3: false },
+    { name: 'loan_purpose (Business)',  coef:  0.0272, top3: false },
+    { name: 'loan_purpose (Home)',      coef:  0.0257, top3: false },
+    { name: 'loan_purpose (Education)', coef: -0.0246, top3: false },
+    { name: 'num_dependents',           coef: -0.0185, top3: false },
+    { name: 'loan_purpose (Car)',       coef:  0.0053, top3: false },
+  ];
+  // Already sorted by abs(coef) desc
+
+  const maxAbs = Math.max(...features.map(f => Math.abs(f.coef)));
+  const chartWrap = document.getElementById('chartWrap');
+
+  features.forEach((f, i) => {
+    const pct = (Math.abs(f.coef) / maxAbs) * 48; // max 48% of track width
+    const dir = f.coef >= 0 ? 'positive' : 'negative';
+    const top3cls = f.top3 ? 'top3' : '';
+    const sign = f.coef >= 0 ? '+' : '';
+
+    const row = document.createElement('div');
+    row.className = 'feat-row';
+    row.dataset.delay = i * 60;
+    row.innerHTML = `
+      <div class="feat-name ${top3cls}">${f.name.replace(/_/g, '_<wbr>')}</div>
+      <div class="bar-track">
+        <div class="zero-line"></div>
+        <div class="bar-fill ${dir} ${top3cls}" data-pct="${pct}" style="width:0"></div>
+      </div>
+      <div class="feat-coef ${dir} ${top3cls}">${sign}${f.coef.toFixed(2)}</div>
+    `;
+    chartWrap.insertBefore(row, chartWrap.querySelector('.chart-legend'));
+    chartWrap.appendChild(row);
+  });
+
+  // ── INTERSECTION OBSERVER FOR ANIMATIONS ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const delay = parseInt(el.dataset.delay || 0);
+      setTimeout(() => {
+        el.classList.add('visible');
+        // animate bars
+        el.querySelectorAll('.bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.pct + '%';
+        });
+      }, delay);
+      observer.unobserve(el);
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.impact-row, .feat-row').forEach(el => observer.observe(el));
+
+  // ── NET BLOCK ANIMATION ──
+  const netObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('visible');
+      // count up net number
+      const target = 536_234_473;
+      let current = 0;
+      const step = target / 50;
+      const fmt = (n) => 'Rp ' + Math.round(n / 1_000_000).toLocaleString('id-ID') + ' Jt';
+      const numEl = document.getElementById('netNumber');
+      const interval = setInterval(() => {
+        current = Math.min(current + step, target);
+        numEl.textContent = fmt(current);
+        if (current >= target) clearInterval(interval);
+      }, 18);
+      netObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.3 });
+
+  netObserver.observe(document.getElementById('netBlock'));
+</script>
+</body>
+</html>
